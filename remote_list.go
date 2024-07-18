@@ -114,7 +114,9 @@ func NewHostnameResults(ctx context.Context, l *logrus.Logger, d time.Duration, 
 		ticker := time.NewTicker(d)
 		go func() {
 			defer ticker.Stop()
+			var lookupSuccess bool
 			for {
+				lookupSuccess = true
 				netipAddrs := map[netip.AddrPort]struct{}{}
 				for _, hostPort := range r.hostnames {
 					timeoutCtx, timeoutCancel := context.WithTimeout(ctx, r.lookupTimeout)
@@ -122,6 +124,7 @@ func NewHostnameResults(ctx context.Context, l *logrus.Logger, d time.Duration, 
 					timeoutCancel()
 					if err != nil {
 						l.WithFields(logrus.Fields{"hostname": hostPort.name, "network": r.network}).WithError(err).Error("DNS resolution failed for static_map host")
+						lookupSuccess = false
 						continue
 					}
 					for _, a := range addrs {
@@ -144,7 +147,7 @@ func NewHostnameResults(ctx context.Context, l *logrus.Logger, d time.Duration, 
 						}
 					}
 				}
-				if different {
+				if different && lookupSuccess {
 					l.WithFields(logrus.Fields{"origSet": origSet, "newSet": netipAddrs}).Info("DNS results changed for host list")
 					r.ips.Store(&netipAddrs)
 					onUpdate()

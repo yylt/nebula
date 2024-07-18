@@ -24,7 +24,7 @@ endif
 
 DOCKER_IMAGE_REPO ?= nebulaoss/nebula
 DOCKER_IMAGE_TAG ?= latest
-
+BUILD_NUMBER = $(shell git rev-parse --short=8 HEAD)
 LDFLAGS = -X main.Build=$(BUILD_NUMBER)
 
 ALL_LINUX = linux-amd64 \
